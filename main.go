@@ -87,44 +87,25 @@ func toAddresses(seed []string) ([]tongo.AccountID, error) {
 
 func recoverSeed(seedString string, client *liteclient.Client) (string, error) {
 	seed := strings.Split(seedString, " ")
-	if len(seed) < 23 || len(seed) > 24 {
-		return "", fmt.Errorf("can not recover")
+	if len(seed) != 24 {
+		return "", fmt.Errorf("seed phrase must contain exactly 24 words")
 	}
 
 	for _, word := range seed {
-		if word == "0" {
-			continue
-		}
-		if !contains(word, wallet.WORDLIST) {
+		if word != "0" && !contains(word, wallet.WORDLIST) {
 			return "", fmt.Errorf("invalid word: %s", word)
 		}
 	}
 
-	if len(seed) == 24 {
-		valid := checkSeed(seed, client)
-		if valid {
-			fmt.Println("Seed is valid")
-			return seedString, nil
-		}
-		for i := range seed {
-			if seed[i] == "0" {
-				seed2 := copySeed(seed)
-				if bruteforce(seed2, i, client) {
-					return strings.Join(seed2, " "), nil
-				}
-			}
-		}
-		return "", fmt.Errorf("can not find valid seed")
-	}
-
-	for i := 0; i < 24; i++ {
+	for i := range seed {
 		if seed[i] == "0" {
-			seed2 := insertEmpty(seed, i)
+			seed2 := copySeed(seed)
 			if bruteforce(seed2, i, client) {
 				return strings.Join(seed2, " "), nil
 			}
 		}
 	}
+
 	return "", fmt.Errorf("can not find valid seed")
 }
 
